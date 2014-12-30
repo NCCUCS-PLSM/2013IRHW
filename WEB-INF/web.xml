@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+	<servlet>
+		<servlet-name>HW</servlet-name>
+		<servlet-class>HW</servlet-class>
+	</servlet>
+    <servlet>
+        <servlet-name>Chinese</servlet-name>
+        <servlet-class>Chinese</servlet-class>
+    </servlet>
+
+	<servlet-mapping> <!--將網址和實際執行的 servlet 路徑做轉換對應 (RESTful ?)-->
+		<servlet-name>HW</servlet-name>	
+		<url-pattern>/HW</url-pattern> 
+	</servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>Chinese</servlet-name>
+        <url-pattern>/Chinese</url-pattern>
+    </servlet-mapping>
+</web-app>

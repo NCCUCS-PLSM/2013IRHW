@@ -1,0 +1,158 @@
+
+import java.lang.*;
+import java.io.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.io.FileWriter;
+import java.text.SimpleDateFormat;
+
+
+import javax.servlet.*;
+import javax.servlet.ServletException;
+import javax.servlet.http.*;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+public class HW extends HttpServlet 
+{
+    public void doPost(HttpServletRequest request, HttpServletResponse response) 
+           throws ServletException, IOException, NullPointerException
+    {
+        response.setContentType("text/html;charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
+
+        PrintWriter logger = new PrintWriter(new FileWriter("/opt/tomcat8/logs/logger"+System.currentTimeMillis(), true));
+
+        
+        String queryString = request.getParameter("words");     // 取得輸入的查詢字串
+        SearchFiles searcher = new SearchFiles();
+        String filename = "", line = "", hitsCount = "", url = "";
+        dirPair tmp;
+        Map<Integer, dirPair> map = new HashMap<Integer, dirPair>();
+        FileReader fr;
+        BufferedReader br;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+        Date current = new Date();
+
+        try
+        {
+            /*查詢*/
+            filename = searcher.doQuery(queryString);  
+
+            /*開啟 output 的詞頻統計檔案，用 Map<String, Set<Pair>> 統計各資料夾的辭彙數目*/
+            fr = new FileReader(filename);
+            br = new BufferedReader(fr);
+
+            int dirIndexStart = 0, dirIndexEnd = 0, dirNumber = 0, dirFreq = 0;
+            int i = 0, accumulator = 0;
+            while((line = br.readLine()) != null)
+            {
+                if(i == 0)
+                {
+                    hitsCount = line;            
+                    i++;        //因為之後不會再用到 i , 且之後 i 必不等於 0 ，就不需要每次 ++ ，可以省去此步驟
+                }
+                else
+                {
+                    /* Path format: slate/[directory number]/[filename].txt:[term frequence]  */
+                    dirIndexStart = line.indexOf("/") + 1;                  //the 1st '/'
+                    dirIndexEnd = line.indexOf("/", dirIndexStart);         // the 2nd '/'
+                    /* dirIndexEnd 之所以不用 -1 是因為 substring(start, end); 所回傳的字串不包含 end 那個字元 */
+                    dirNumber = Integer.parseInt(line.substring(dirIndexStart, dirIndexEnd)); 
+                    dirFreq = Integer.parseInt(line.substring(line.indexOf(":") + 1));
+                    
+                    if(map.get(dirNumber)==null)
+                    {
+                        dirPair pair = new dirPair(dirNumber, dirFreq);           
+                        map.put(dirNumber, pair);
+                    }
+                    else
+                    {   
+                        tmp = map.get(dirNumber);          
+                        accumulator = tmp.getCount();
+                        tmp.setCount(++accumulator);
+                        map.put(dirNumber, tmp);
+                    }    
+                }//end of else(i == 0)              
+            }//end of while
+            br.close();
+            fr.close();
+
+            /*刪除 term_frequence[time] 檔案*/           
+            File file = new File(filename);
+            file.delete();
+            file = null;
+
+            /*呼叫 Google Char 繪圖*/
+            DrawChart chart = new DrawChart();          // 建立 DrawChart 物件 (tmp)
+            url = chart.draw(map);                  // 取得結合繪圖參數的 API Acess URL (tmp)
+
+        }//end of try
+        catch(Exception e)
+        {
+            logger.println(sdf.format(current)+": "+e.toString());
+
+            StackTraceElement[] stack  = e.getStackTrace();
+            for(StackTraceElement s: stack)
+            {
+                logger.println(s.toString()+"\n");
+            }
+
+        }
+
+        logger.println(sdf.format(current)+": "+"Finished!");
+        logger.close();
+
+        /*HTML Output*/
+        PrintWriter out = response.getWriter();     // 建立輸出物件
+        Collection collection = map.values();
+        Iterator iterator = collection.iterator();
+        out.println("<html>");
+        out.println("<body>");
+        out.println("<a href='http://localhost:8080/2013IRHW'>回查詢頁</a><br>");
+        out.println("<p>Search for: "+queryString+"</p>");
+        out.println("<p>"+ hitsCount +"</p>");
+        out.println("<p><img alt='Google Chart' src='"+ url +"'></p>");
+
+        while(iterator.hasNext()) 
+        {
+           tmp = (dirPair)iterator.next();
+           out.println("<p>Directory "+tmp.getNumber()+": "+tmp.getCount()+"</p>");
+        }
+        
+        out.println("</body>");
+        out.println("</html>");
+  }//end of doPost
+}
+
+class dirPair
+{
+    private int dirNumber;
+    private int termCount;
+    
+    dirPair(int dirNum, int termCnt)
+    {
+        this.dirNumber = dirNum;
+        this.termCount = termCnt;
+    }
+    
+    int getCount()
+    {
+        return this.termCount;
+    }
+
+    int getNumber()
+    {
+        return this.dirNumber;
+    }
+
+    void setCount(int termCnt)
+    {
+        this.termCount = termCnt;    
+    }
+    
+}
