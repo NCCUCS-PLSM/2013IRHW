@@ -60,12 +60,12 @@
 	* SearchFiles.java - Search file in index
 
 #Before Using
-1. Please copy or setup classpath of Java Compiler with JAR in WEB/lib.
+1. Please copy or setup classpath of Java Compiler with JAR in WEB-INF/lib.
 2. Please compile following files:
 	* Classess to be moved to WEB-INF/classes: 
 		1. HW.java
 		2. Chinese.java 
-	* Classese to be use as Tools: IndexFiles.java, SegChinese.java
+	* Classese to be used as Tools: IndexFiles.java, SegChinese.java
 3. After compilation of IndexFiles.java, please index WEB-INF/classese/slate/* with IndexFiles: `java org.apache.lucene.demo.IndexFiles -index index -docs WEB-INF/classese/slate/*` or `java IndexFiles -index index -docs WEB-INF/classese/slate/*`.
 4. After compilation of SegChinese.java, please segment Chinsese corpus with it. Default corpus are part chapters of `紅樓夢` and `西遊記`. When you finish segmenting, remember to put them in `chinese` folder(as dictionary).
 5. Note that English implementation does not contain segmenter. It's only use indexer that lucenen offers. However, Chinese part uses a segmenter called mmseg4j and does not do indexing. 
